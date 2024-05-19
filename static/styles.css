@@ -1,0 +1,24 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    position: relative; /* Ensure the body is positioned relatively */
+    min-height: 100vh; /* Minimum height of 100% of the viewport height */
+}
+
+.logo-container {
+    position: fixed; /* Fixed positioning to stay in view */
+    left: 20px; /* Left spacing */
+    bottom: 20px; /* Bottom spacing */
+}
+
+.logo {
+    height: 50px; /* Adjust the size as needed */
+}
+#riceHistogram {
+        max-width: 800px; /* Maximum width of the canvas */
+        display: block; /* Ensures it doesn't inline */
+        margin: 0 auto; /* Center the canvas if desired */
+}
+img {
+    display: none;
+}

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload File for Rice Grain Analysis</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            align-items: center;
+            text-align: center;
+            background-color: beige;
+        }
+
+        .heading {
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+
+        .italic {
+            font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+            font-style: italic;
+            font-size: 3vw;
+            margin: 0;
+            padding: 0;
+        }
+
+        .tagline {
+            font-size: 4vw;
+            margin: 0;
+            padding: 0;
+        }
+
+        .select {
+            font-size: 1.5vw;
+            margin: 10px 0px;
+        }
+
+        .choosefile {
+            margin: 10px 0px;
+        }
+
+        .subheading {
+            color: orangered;
+        }
+
+        .logo-container {
+            margin: 2vh 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: orangered;
+            font-size: 2vw;
+            padding-left: 20px;
+        }
+
+        .logo {
+            max-width: 50%;
+            height: auto;
+            max-height: 10vh;
+            border: 0.2vh solid black;
+            margin-right: 2px;
+        }
+
+        h1 {
+            margin: 2vh 0;
+            font-size: 3vw;
+        }
+
+        form {
+            margin-bottom: 2vh;
+            font-size: 20px;
+        }
+
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4vw;
+        }
+
+        .iframe-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: auto;
+            width: auto;
+            max-width: 90vw;
+            margin: 2vh 0;
+        }
+
+        #driveViewer {
+            width: auto;
+            height: auto;
+            margin-bottom: 2vh;
+        }
+
+        #riceHistogram {
+            width: 100%;
+            height: 40vw;
+        }
+
+        @media (min-width: 100px) {
+            .content-container {
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .iframe-container {
+                flex: 1;
+                margin-left: 2vw;
+                margin-right: 2vw;
+            }
+            /* git commit */
+            #driveViewer {
+                height: 30vh;
+            }
+
+            #riceHistogram {
+                width: 100%;
+                height: 400px;
+            }
+
+            .tagline {
+                font-size: 2vw;
+            }
+
+            .select {
+                font-size: 3vw;
+            }
+
+            .logo {
+                max-width: 40%;
+                max-height: 4vh;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .logo-container {
+                justify-content: flex-start;
+            }
+
+            .logo {
+                max-width: 30%;
+                max-height: 6vh;
+            }
+
+            h1 {
+                font-size: 2.5vw;
+            }
+
+            form {
+                font-size: 18px;
+            }
+
+            .content-container {
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .iframe-container {
+                flex: 1;
+                margin-left: 20px;
+            }
+
+            #driveViewer {
+                height: auto;
+                width: auto;
+            }
+
+            #riceHistogram {
+                height: auto;
+                width: auto;
+            }
+
+            .tagline {
+                font-size: 1.5vw;
+            }
+
+            .select {
+                font-size: 2.5vw;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .logo-container {
+                justify-content: flex-start;
+            }
+
+            .logo {
+                max-width: 30%;
+                max-height: 6vh;
+            }
+
+            h1 {
+                font-size: 2.5vw;
+            }
+
+            form {
+                font-size: 18px;
+            }
+
+            .content-container {
+                padding: 2vw;
+            }
+
+            #driveViewer {
+                height: auto;
+                width: auto;
+            }
+
+            #riceHistogram {
+                height: auto;
+                width: auto;
+            }
+
+            .iframe-container {
+                max-width: 45vw;
+            }
+
+            /* #riceHistogram {
+                height: 30vh;
+            } */
+
+            .tagline {
+                font-size: 1.5vw;
+            }
+
+            .select {
+                font-size: 2.5vw;
+            }
+        }
+    </style>
+    <script>
+        $(document).ready(function () {
+            $('form').submit(function (event) {
+                event.preventDefault();
+                var formData = new FormData(this);
+
+                $.ajax({
+                    url: '/upload',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        $('#computeResult').html(
+                            'Grain Count: ' + response.results[0] + '<br>' +
+                            'Average Grain length: ' + response.results[1] + '<br>' +
+                            'Broken Rice Count: ' + response.results[2]
+                        );
+                        var iframeUrl = "https://drive.google.com/file/d/" + response.file_url + "/preview";
+                        $('#driveViewer').attr('src', iframeUrl);
+                        // $('#imageDisplay').attr('src', response.file_url);
+                        plotHistogram(response.points);
+                    },
+                    error: function (xhr, status, error) {
+                        $('#computeResult').text('Failed to compute: ' + xhr.responseText);
+                    }
+                });
+            });
+        });
+        function computeHistogram(data, binSize) {
+            const max = Math.max(...data);
+            const min = Math.min(...data);
+            const numBins = Math.ceil((max - min) / binSize);
+            const bins = new Array(numBins).fill(0);
+            const binEdges = Array.from({ length: numBins + 1 }, (_, i) => min + i * binSize);
+
+            data.forEach(value => {
+                const binIndex = Math.floor((value - min) / binSize);
+                if (binIndex < bins.length) {
+                    bins[binIndex]++;
+                }
+            });
+            return { counts: bins, bins: binEdges };
+        }
+
+        function plotHistogram(data) {
+            const histogramData = computeHistogram(data, 1); // Assuming bin size of 1mm
+            const ctx = document.getElementById('riceHistogram').getContext('2d');
+
+            if (window.riceChart instanceof Chart) {
+                window.riceChart.destroy();
+            }
+            window.riceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: histogramData.bins.slice(0, -1).map((x, i) => `${x.toFixed(1)} - ${histogramData.bins[i + 1].toFixed(1)}`),
+                    datasets: [{
+                        label: 'Count of Rice Grain Lengths (mm)',
+                        data: histogramData.counts,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // This disables maintaining the aspect ratio
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: 20,   // Adjust this based on your data's maximum expected value
+                            ticks: {
+                                // This ensures that the scale remains manageable
+                                stepSize: 1  // Adjust this depending on your data range
+                            },
+                            title: {
+                                display: true,
+                                text: 'Count'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Length (mm)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='images/Logo.png') }}" alt="Logo" class="logo">
+        <!-- <img src="images/Logo.png" alt="Logo" class="logo"> -->
+        <p>Badhaan</p>
+    </div>
+
+    <div class="heading">
+        <h1 class="italic"><span class="subheading">Rice Grain</span> Analysis</h1>
+        <p class="tagline">Best Rice Analysis at your fingertips</p>
+    </div>
+
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <label class="select">Select file to upload:</label>
+        <div class="choosefile">
+            <input type="file" name="file" accept=".jpg,.pdf,.jpeg,.png" class="input">
+            <input type="submit" value="Upload File" class="input">
+        </div>
+    </form>
+    <div class="content-container">
+        <p id="computeResult"></p>
+        <div class="iframe-container">
+            <iframe id="driveViewer" style="border: none;"></iframe>
+        </div>
+        <div style="width: 100%; overflow: hidden;">
+            <canvas id="riceHistogram"></canvas>
+        </div>
+    </div>
+</body>
+
+</html>

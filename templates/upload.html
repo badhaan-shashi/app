@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload File and Get Result</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    $(document).ready(function(){
+        $('form').submit(function(event){
+            event.preventDefault(); // Prevent the default form submission
+            var formData = new FormData(this);
+            // git commit
+            $.ajax({
+                url: '/upload',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response){
+                    $('#grainCount').text('Grain Count Results: ' + response.join(', '));
+                },
+                error: function(xhr, status, error){
+                    $('#grainCount').text('Grain Count Failed to compute: ' + xhr.responseText);
+                }
+            });
+        });
+    });
+    </script>
+</head>
+<body>
+    <h1>Upload a File to Google Drive</h1>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".jpg,.pdf,.jpeg,.png">
+        <button type="submit">Upload</button>
+    </form>
+    <p id="grainCount"></p> <!-- Placeholder for compute results -->
+</body>
+</html>
